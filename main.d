@@ -12,9 +12,9 @@ ulong[][ulong] read_input() {
             user_items[row[0]] = row[1 .. $];
         }
     }
-
     return user_items;
 }
+
 
 ulong[][ulong] transpose(ulong[][ulong] user_items) {
     ulong[][ulong] item_users;
@@ -29,6 +29,7 @@ ulong[][ulong] transpose(ulong[][ulong] user_items) {
     return item_users;
 }
 
+
 double tanimoto(ulong[] a, ulong[] b) {
     if (a.empty || b.empty) {
         return 0;
@@ -36,6 +37,7 @@ double tanimoto(ulong[] a, ulong[] b) {
     auto i = array(setIntersection(a, b));
     return (1.0 * i.length) / (a.length + b.length - i.length);
 }
+
 
 struct CFResult {
     ulong item;
@@ -50,7 +52,7 @@ struct CFResult {
 }
 
 
-CFResult[][ulong] cf(ulong[][ulong] item_users) {
+CFResult[][ulong] cf(ulong[][ulong] item_users, ulong max_number_of_result_per_item) {
     CFResult[][ulong] results;
     foreach (item1, users1 ; item_users) {
         foreach (item2, users2 ; item_users) {
@@ -63,18 +65,19 @@ CFResult[][ulong] cf(ulong[][ulong] item_users) {
         }
     }
 
-    foreach (item ; results.keys) {
+    foreach (item, ref value ; results) {
         ulong max_size;
-        if (MAX_NUMBER_OF_RESULT_PER_ITEM > results[item].length) {
-            max_size = results[item].length;
+        if (max_number_of_result_per_item > value.length) {
+            max_size = value.length;
         } else {
-            max_size = MAX_NUMBER_OF_RESULT_PER_ITEM;
+            max_size = max_number_of_result_per_item;
         }
-        partialSort!("a.value > b.value")(results[item], max_size);
-        results[item] = take(results[item], max_size);
+        partialSort!("a.value > b.value")(value, max_size);
+        value.length = max_size;
     }
     return results;
 }
+
 
 void write_results(CFResult[][ulong] results) {
     foreach (item; sort(results.keys)) {
@@ -84,12 +87,14 @@ void write_results(CFResult[][ulong] results) {
 
 }
 
+
 void main() {
     auto user_items = read_input();
 //    writeln(user_items);
     auto item_users = transpose(user_items);
 //    writeln(item_users);
-    auto results = cf(item_users);
+    auto results = cf(item_users, MAX_NUMBER_OF_RESULT_PER_ITEM);
+//    auto results = cf(item_users, 2);
 //    writeln(results);
     write_results(results);
 }
