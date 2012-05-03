@@ -4,7 +4,7 @@ import std.stdio, std.string, std.array, std.conv, std.algorithm, std.range;
 
 immutable ulong MAX_NUMBER_OF_RESULT_PER_ITEM = 30;
 
-ulong[][ulong] read_input() {
+ulong[][ulong] readInput() {
     ulong[][ulong] user_items;
     foreach(string line; lines(stdin)) {
         ulong[] row = array(map!"parse!ulong(a)"(filter!"a.length > 0"(split(strip(line), ","))));
@@ -53,48 +53,43 @@ struct CFResult {
 
 
 CFResult[][ulong] cf(ulong[][ulong] item_users, ulong max_number_of_result_per_item) {
-    CFResult[][ulong] results;
+    CFResult[][ulong] result_hash;
     foreach (item1, users1 ; item_users) {
         foreach (item2, users2 ; item_users) {
             if (item1 <= item2) continue;
             auto t = tanimoto(users1, users2);
             if (t > 0) {
-                results[item1] ~= CFResult(item2, t);
-                results[item2] ~= CFResult(item1, t);
+                result_hash[item1] ~= CFResult(item2, t);
+                result_hash[item2] ~= CFResult(item1, t);
             }
         }
     }
 
-    foreach (item, ref value ; results) {
-        ulong max_size;
-        if (max_number_of_result_per_item > value.length) {
-            max_size = value.length;
+    foreach (item, ref results; result_hash) {
+        if (max_number_of_result_per_item > results.length) {
+            sort!("a.value > b.value")(results);
         } else {
-            max_size = max_number_of_result_per_item;
+            partialSort!("a.value > b.value")(results, max_number_of_result_per_item);
+            results.length = max_number_of_result_per_item;
         }
-        partialSort!("a.value > b.value")(value, max_size);
-        value.length = max_size;
     }
-    return results;
+    return result_hash;
 }
 
 
-void write_results(CFResult[][ulong] results) {
-    foreach (item; sort(results.keys)) {
+void writeResultHash(CFResult[][ulong] result_hash) {
+    foreach (item; sort(result_hash.keys)) {
         write(item, ":");
-        writeln(joiner(map!"a.toString()"(results[item]), ","));
+        writeln(joiner(map!"a.toString()"(result_hash[item]), ","));
     }
 
 }
 
 
 void main() {
-    auto user_items = read_input();
-//    writeln(user_items);
+    auto user_items = readInput();
     auto item_users = transpose(user_items);
-//    writeln(item_users);
-    auto results = cf(item_users, MAX_NUMBER_OF_RESULT_PER_ITEM);
-//    auto results = cf(item_users, 2);
-//    writeln(results);
-    write_results(results);
+    auto result_hash = cf(item_users, MAX_NUMBER_OF_RESULT_PER_ITEM);
+//    auto result_hash = cf(item_users, 2);
+    writeResultHash(result_hash);
 }
