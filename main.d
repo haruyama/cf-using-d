@@ -20,12 +20,7 @@ ulong[][ulong] transpose(ulong[][ulong] user_items) {
     ulong[][ulong] item_users;
     foreach (user, items; user_items) {
         foreach(item; items) {
-            if (item in item_users) {
-                item_users[item] ~= user;
-            } else {
-                item_users[item] = [user];
-            }
-
+            item_users[item] ~= user;
         }
     }
     foreach (item; item_users.keys) {
@@ -62,18 +57,8 @@ CFResult[][ulong] cf(ulong[][ulong] item_users) {
             if (item1 <= item2) continue;
             auto t = tanimoto(users1, users2);
             if (t > 0) {
-                CFResult r1 = CFResult(item2, t);
-                if (item1 in results) {
-                    results[item1] ~= r1;
-                } else {
-                    results[item1] = [r1];
-                }
-                CFResult r2 = CFResult(item1, t);
-                if (item2 in results) {
-                    results[item2] ~= r2;
-                } else {
-                    results[item2] = [r2];
-                }
+                results[item1] ~= CFResult(item2, t);
+                results[item2] ~= CFResult(item1, t);
             }
         }
     }
