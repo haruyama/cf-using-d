@@ -1,2 +1,3 @@
 cf
 *.o
+cf_parallel

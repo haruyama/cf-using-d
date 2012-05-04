@@ -1,6 +1,6 @@
 module cf.main;
 
-import std.stdio, std.string, std.array, std.conv, std.algorithm, std.range;
+import std.stdio, std.string, std.array, std.conv, std.algorithm, std.range, std.parallelism;
 
 immutable ulong MAX_NUMBER_OF_RESULT_PER_ITEM = 30;
 
@@ -54,13 +54,30 @@ struct CFResult {
 
 CFResult[][ulong] cf(ulong[][ulong] item_users, ulong max_number_of_result_per_item) {
     CFResult[][ulong] result_hash;
-    foreach (item1, users1 ; item_users) {
-        foreach (item2, users2 ; item_users) {
-            if (item1 <= item2) continue;
-            auto t = tanimoto(users1, users2);
-            if (t > 0) {
-                result_hash[item1] ~= CFResult(item2, t);
-                result_hash[item2] ~= CFResult(item1, t);
+
+    version (Parallel) {
+        auto items = item_users.keys;
+        foreach (item1;  taskPool.parallel(items, 4)) {
+            auto users1 = item_users[item1];
+            foreach (item2, users2 ; item_users) {
+                if (item1 <= item2) continue;
+                auto t = tanimoto(users1, users2);
+                if (t > 0) {
+                    result_hash[item1] ~= CFResult(item2, t);
+                    result_hash[item2] ~= CFResult(item1, t);
+                }
+            }
+        }
+    } else {
+
+        foreach (item1, users1 ; item_users) {
+            foreach (item2, users2 ; item_users) {
+                if (item1 <= item2) continue;
+                auto t = tanimoto(users1, users2);
+                if (t > 0) {
+                    result_hash[item1] ~= CFResult(item2, t);
+                    result_hash[item2] ~= CFResult(item1, t);
+                }
             }
         }
     }
